@@ -5,40 +5,76 @@ import { UIManager } from './uiManager.js';
 import { PVPClient } from './pvpClient.js';
 
 window.addEventListener('DOMContentLoaded', () => {
-  // Initialize game engine
   const game = new HanafudaGame();
-  
-  // Initialize UI Manager
   const ui = new UIManager(game);
   const pvp = new PVPClient();
   let applyingRemoteState = false;
+  let hasActiveGame = false;
+
+  const homeScreen = document.getElementById('home-screen');
+  const appContainer = document.getElementById('app-container');
+  const homeStatusEl = document.getElementById('home-status');
+  const pvpStatusEl = document.getElementById('pvp-status');
+  const roomIdLabel = document.getElementById('current-room-id');
+  const homeRoomInput = document.getElementById('home-room-id-input');
+
+  const setHomeStatus = (message) => {
+    if (homeStatusEl) homeStatusEl.textContent = message;
+  };
+
+  const showHome = () => {
+    hasActiveGame = false;
+    pvp.leaveRoom();
+    ui.setOnlineMode(false);
+    ui.setLocalActor('player');
+    ui.resetViewState();
+    game.reset();
+    document.body.classList.remove('online-mode');
+    homeScreen?.classList.remove('is-hidden');
+    appContainer?.classList.add('is-hidden');
+    if (pvpStatusEl) pvpStatusEl.textContent = 'CPU対戦';
+    if (roomIdLabel) roomIdLabel.textContent = 'CPU戦';
+    setHomeStatus('モードを選択してください');
+  };
+
+  const showGame = () => {
+    homeScreen?.classList.add('is-hidden');
+    appContainer?.classList.remove('is-hidden');
+    hasActiveGame = true;
+  };
+
+  const resetLocalGameView = () => {
+    ui.completedYakus.player.clear();
+    ui.completedYakus.cpu.clear();
+    ui.resetViewState();
+  };
 
   pvp.onRemoteState = (remoteState) => {
     applyingRemoteState = true;
-    ui.selectedCardId = null;
-    ui.selectedSpecialCardId = null;
+    resetLocalGameView();
     game.importState(remoteState);
     ui.renderWithMatches(game.getState());
     applyingRemoteState = false;
   };
 
   pvp.onStatus = (message) => {
-    const statusEl = document.getElementById('pvp-status');
-    if (statusEl) statusEl.textContent = message;
+    if (pvpStatusEl) pvpStatusEl.textContent = message;
+    setHomeStatus(message);
   };
-  
-  // Custom hook: when state changes, we render and bind matching clicks
+
   game.registerStateChangeCallback((state) => {
+    if (!hasActiveGame) return;
+
     ui.renderWithMatches(state);
 
     if (pvp.enabled && !applyingRemoteState) {
       pvp.publishState(game.exportState()).catch(error => {
-        const statusEl = document.getElementById('pvp-status');
-        if (statusEl) statusEl.textContent = `通信エラー: ${error.message}`;
+        const message = `通信エラー: ${error.message}`;
+        if (pvpStatusEl) pvpStatusEl.textContent = message;
+        setHomeStatus(message);
       });
     }
-    
-    // CPU turn trigger if phase shifted to PLAY_HAND and currentTurn is cpu
+
     if (!pvp.enabled && state.currentTurn === 'cpu' && !ui.isCPUTyping) {
       if (state.phase === 'PLAY_HAND') {
         ui.triggerCPUTurn();
@@ -46,67 +82,84 @@ window.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Bind Restart Button
-  const restartBtn = document.getElementById('restart-btn');
-  if (restartBtn) {
-    restartBtn.addEventListener('click', () => {
-      if (confirm('ゲームを再起動しますか？現在進行中の対局はリセットされます。')) {
-        ui.completedYakus.player.clear();
-        ui.completedYakus.cpu.clear();
-        ui.selectedCardId = null;
-        ui.selectedSpecialCardId = null;
-        game.reset();
-        game.startRound();
-      }
-    });
-  }
-
-  const createRoomBtn = document.getElementById('create-room-btn');
-  const joinRoomBtn = document.getElementById('join-room-btn');
-  const roomInput = document.getElementById('room-id-input');
-  const roomIdLabel = document.getElementById('current-room-id');
+  const startCpuGame = () => {
+    pvp.leaveRoom();
+    ui.setOnlineMode(false);
+    ui.setLocalActor('player');
+    document.body.classList.remove('online-mode');
+    if (roomIdLabel) roomIdLabel.textContent = 'CPU戦';
+    if (pvpStatusEl) pvpStatusEl.textContent = 'CPU対戦';
+    resetLocalGameView();
+    game.reset();
+    showGame();
+    game.startRound();
+  };
 
   const activatePVP = (localActor, roomId) => {
     ui.setOnlineMode(true);
     ui.setLocalActor(localActor);
     document.body.classList.add('online-mode');
-    if (roomIdLabel) roomIdLabel.textContent = roomId;
-    ui.completedYakus.player.clear();
-    ui.completedYakus.cpu.clear();
-    ui.selectedCardId = null;
-    ui.selectedSpecialCardId = null;
+    if (roomIdLabel) roomIdLabel.textContent = `部屋 ${roomId}`;
+    resetLocalGameView();
+    showGame();
     ui.renderWithMatches(game.getState());
   };
 
-  if (createRoomBtn) {
-    createRoomBtn.addEventListener('click', async () => {
-      try {
-        game.reset();
-        game.startRound();
-        const result = await pvp.createRoom(game.exportState());
-        activatePVP(result.localActor, result.roomId);
-      } catch (error) {
-        pvp.onStatus?.(error.message);
-      }
-    });
-  }
+  document.getElementById('home-cpu-btn')?.addEventListener('click', () => {
+    startCpuGame();
+  });
 
-  if (joinRoomBtn) {
-    joinRoomBtn.addEventListener('click', async () => {
-      try {
-        const result = await pvp.joinRoom(roomInput?.value || '');
-        if (result.state) {
-          applyingRemoteState = true;
-          game.importState(result.state);
-          applyingRemoteState = false;
-        }
-        activatePVP(result.localActor, result.roomId);
-      } catch (error) {
-        pvp.onStatus?.(error.message);
-      }
-    });
-  }
+  document.getElementById('home-create-room-btn')?.addEventListener('click', async () => {
+    try {
+      setHomeStatus('ルームを作成中...');
+      resetLocalGameView();
+      game.reset();
+      showGame();
+      game.startRound();
+      const result = await pvp.createRoom(game.exportState());
+      activatePVP(result.localActor, result.roomId);
+    } catch (error) {
+      showHome();
+      setHomeStatus(error.message);
+    }
+  });
 
-  // Start the first round!
-  ui.init();
+  document.getElementById('home-join-room-btn')?.addEventListener('click', async () => {
+    try {
+      setHomeStatus('ルームに参加中...');
+      const result = await pvp.joinRoom(homeRoomInput?.value || '');
+      if (result.state) {
+        applyingRemoteState = true;
+        game.importState(result.state);
+        applyingRemoteState = false;
+      }
+      activatePVP(result.localActor, result.roomId);
+    } catch (error) {
+      setHomeStatus(error.message);
+    }
+  });
+
+  document.getElementById('home-btn')?.addEventListener('click', () => {
+    if (confirm('ホームに戻りますか？現在の対局は画面から離れます。')) {
+      showHome();
+    }
+  });
+
+  document.getElementById('restart-btn')?.addEventListener('click', () => {
+    if (!confirm('ゲームを再起動しますか？現在進行中の対局はリセットされます。')) return;
+
+    if (pvp.enabled) {
+      resetLocalGameView();
+      game.reset();
+      game.startRound();
+      return;
+    }
+
+    startCpuGame();
+  });
+
+  ui.initEmpty();
+  showHome();
+});
+
 });
