@@ -99,6 +99,25 @@ export class UIManager {
     soundEffects.playShuffle();
   }
 
+  initEmpty() {
+    this.resetViewState();
+    this.render(this.game.getState());
+  }
+
+  resetViewState() {
+    this.selectedCardId = null;
+    this.selectedSpecialCardId = null;
+    this.isCPUTyping = false;
+    this.presentedSpecialUseId = null;
+    this.presentedAnnouncementIds.clear();
+    this.presentationQueue = [];
+    this.isPresentationActive = false;
+    clearTimeout(this.specialUseTimer);
+    this.specialUseToastEl?.classList.remove('active');
+    this.specialUseToastEl?.setAttribute('aria-hidden', 'true');
+    this.hideModal();
+  }
+
   // Renders the full game state
   render(state) {
     this.renderScores(state);
@@ -395,6 +414,8 @@ export class UIManager {
 
   // Evaluates if any new Yaku has been completed to show dynamic popups
   checkYakuAlerts(state) {
+    if (!state.roundScores?.player || !state.roundScores?.cpu) return;
+
     const checkUser = (actor) => {
       const currentYakus = state.roundScores[actor].yakus;
       const cached = this.completedYakus[actor];
