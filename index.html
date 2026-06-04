@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>花合わせ - 1v1 Hanafuda Base Game</title>
+  <meta name="description" content="モダンなガラスモーフィズムデザインで遊ぶ、一対一の本格花札（花合わせ）ゲームです。">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header>
+      <div class="brand">
+        <div class="brand-emblem">🌸</div>
+        <h1>花合わせ</h1>
+      </div>
+      <div class="game-controls">
+        <div class="pvp-controls" aria-label="オンライン対戦">
+          <button id="create-room-btn" class="btn btn-primary">部屋を作る</button>
+          <input id="room-id-input" class="room-id-input" type="text" maxlength="5" placeholder="部屋ID">
+          <button id="join-room-btn" class="btn">参加</button>
+          <span id="current-room-id" class="room-id-label">未接続</span>
+        </div>
+        <button id="restart-btn" class="btn">最初からやり直す</button>
+      </div>
+    </header>
+
+    <!-- Main Game Board and Sidebar Grid -->
+    <main class="game-grid">
+      <!-- Left: Game Board -->
+      <section class="board-area" aria-label="ゲームボード">
+        <!-- Status Bar -->
+        <div class="zone-header" style="border-left-color: var(--accent-blue)">
+          <div id="turn-indicator" class="zone-title" style="font-size: 1rem;">ゲームを初期化中...</div>
+          <div id="pvp-status" class="pvp-status">CPU対戦</div>
+        </div>
+
+        <!-- Opponent (CPU) Area -->
+        <div class="opponent-area">
+          <div class="zone-header">
+            <span class="zone-title">相手</span>
+            <span id="cpu-score" class="zone-score">合計点: 0 点</span>
+          </div>
+          <!-- CPU Hand -->
+          <div id="cpu-hand" class="card-row" aria-label="相手の手札"></div>
+          
+          <!-- CPU Captured -->
+          <div class="captured-container">
+            <div class="captured-pile">
+              <span class="captured-pile-title">光 (<span id="c-hikari-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="c-captured-hikari" style="display:flex; gap: 4px;"></div>
+            </div>
+            <div class="captured-pile">
+              <span class="captured-pile-title">タネ (<span id="c-tane-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="c-captured-tane" style="display:flex; gap: 4px;"></div>
+            </div>
+            <div class="captured-pile">
+              <span class="captured-pile-title">短冊 (<span id="c-tanzaku-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="c-captured-tanzaku" style="display:flex; gap: 4px;"></div>
+            </div>
+            <div class="captured-pile">
+              <span class="captured-pile-title">カス (<span id="c-kasu-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="c-captured-kasu" style="display:flex; gap: 4px;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field (Playing Grid) -->
+        <div id="field-grid" class="field-grid" aria-label="場札">
+          <!-- Cards dynamically rendered here -->
+        </div>
+
+        <!-- Hidden legacy deck elements kept for script compatibility. -->
+        <div class="deck-pile-container deck-pile-hidden">
+          <div style="display: flex; flex-direction: column; align-items: center; gap: 0.25rem;">
+            <span class="zone-title" style="font-size: 0.8rem;">山札</span>
+            <div id="deck-pile" style="position: relative;"></div>
+            <span id="deck-count" class="deck-count-badge">57 枚</span>
+          </div>
+        </div>
+
+        <!-- Player Area -->
+        <div class="player-area">
+          <div class="zone-header">
+            <span class="zone-title">あなた</span>
+            <span id="player-score" class="zone-score">合計点: 0 点</span>
+          </div>
+          
+          <!-- Player Captured -->
+          <div class="captured-container" style="margin-bottom: 0.75rem;">
+            <div class="captured-pile">
+              <span class="captured-pile-title">光 (<span id="p-hikari-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="p-captured-hikari" style="display:flex; gap: 4px;"></div>
+            </div>
+            <div class="captured-pile">
+              <span class="captured-pile-title">タネ (<span id="p-tane-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="p-captured-tane" style="display:flex; gap: 4px;"></div>
+            </div>
+            <div class="captured-pile">
+              <span class="captured-pile-title">短冊 (<span id="p-tanzaku-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="p-captured-tanzaku" style="display:flex; gap: 4px;"></div>
+            </div>
+            <div class="captured-pile">
+              <span class="captured-pile-title">カス (<span id="p-kasu-count" class="captured-pile-count">0</span>枚)</span>
+              <div id="p-captured-kasu" style="display:flex; gap: 4px;"></div>
+            </div>
+          </div>
+
+          <!-- Player Hand -->
+          <div id="player-hand" class="card-row" aria-label="あなたの手札"></div>
+        </div>
+      </section>
+
+      <!-- Right: Sidebar Information -->
+      <aside class="sidebar">
+        <!-- Game Status Panel -->
+        <div class="panel">
+          <div class="panel-title">
+            <span>対局状況</span>
+            <span style="font-size: 0.8rem; opacity: 0.8;">回戦: <span id="round-number">1 / 3</span></span>
+          </div>
+          <div style="font-size: 0.85rem; line-height: 1.6;">
+            <p><strong>遊び方:</strong></p>
+            <ol style="margin-left: 1.2rem; padding-top: 0.4rem;">
+              <li>最初の手札は4枚、場札は6枚です。</li>
+              <li>ターン開始時に山札から手札へ1枚引きます。後手の最初の番だけ2枚引きます。</li>
+              <li>手札を選び、同じ月の場札があれば必ず場札をクリックして獲得します。</li>
+              <li>取れる札がない場合だけ、選んだ手札をもう一度クリックして場に出します。</li>
+              <li>場札が8枚になると、場札を山札に戻して混ぜ直し、山札から6枚を場に出します。</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Player Active Yaku -->
+        <div class="panel">
+          <div class="panel-title">あなたの出来役</div>
+          <div id="player-yaku-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+            <!-- Player Yakus dynamically loaded -->
+          </div>
+        </div>
+
+        <!-- CPU Active Yaku -->
+        <div class="panel">
+          <div class="panel-title">相手の出来役</div>
+          <div id="cpu-yaku-list" style="display: flex; flex-direction: column; gap: 0.4rem;">
+            <!-- CPU Yakus dynamically loaded -->
+          </div>
+        </div>
+
+        <!-- Game Logs Panel -->
+        <div class="panel" style="flex-grow: 1;">
+          <div class="panel-title">対局ログ</div>
+          <div id="log-list" class="log-list"></div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <!-- End of Round / Game Over Overlays -->
+  <div id="game-overlay" class="overlay">
+    <div class="modal-content">
+      <h2 id="modal-title" class="modal-title">対局結果</h2>
+      <div id="modal-body" class="modal-body">
+        <!-- Results text injected here -->
+      </div>
+      <button id="modal-btn" class="btn btn-primary" style="padding: 0.8rem 2rem; font-size: 1.1rem; width: 100%;">次へ</button>
+    </div>
+  </div>
+
+  <!-- Yaku Alert banner toast -->
+  <div id="yaku-toast" class="yaku-toast-container">
+    <div id="yaku-toast-title" class="yaku-toast-title">役完成！</div>
+    <div id="yaku-toast-desc" class="yaku-toast-desc">三光 (5点)</div>
+  </div>
+
+  <!-- Special card use presentation -->
+  <div id="special-use-toast" class="special-use-toast" aria-live="polite" aria-hidden="true">
+    <div class="special-use-panel">
+      <div id="special-use-actor" class="special-use-actor">特殊カード発動</div>
+      <div id="special-use-card-slot" class="special-use-card-slot"></div>
+      <div id="special-use-name" class="special-use-name">カード名</div>
+      <div id="special-use-effect" class="special-use-effect"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
