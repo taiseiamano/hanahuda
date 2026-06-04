@@ -126,6 +126,17 @@ export class PVPClient {
     });
   }
 
+  leaveRoom() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+    }
+    this.enabled = false;
+    this.roomId = '';
+    this.localActor = 'player';
+    this.lastVersion = 0;
+  }
+
   publishState(state) {
     if (!this.enabled || !this.db || !this.roomId) return Promise.resolve();
 
