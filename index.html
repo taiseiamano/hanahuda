@@ -8,7 +8,25 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="app-container">
+  <section id="home-screen" class="home-screen" aria-label="ホーム画面">
+    <div class="home-shell">
+      <div class="home-brand">
+        <div class="home-emblem">🌸</div>
+        <h1>花合わせ</h1>
+      </div>
+      <div class="home-actions">
+        <button id="home-cpu-btn" class="home-action primary">CPU戦</button>
+        <button id="home-create-room-btn" class="home-action">ルーム作成</button>
+        <div class="home-join-row">
+          <input id="home-room-id-input" class="home-room-input" type="text" maxlength="5" placeholder="部屋ID">
+          <button id="home-join-room-btn" class="home-action compact">ルーム参加</button>
+        </div>
+      </div>
+      <div id="home-status" class="home-status">モードを選択してください</div>
+    </div>
+  </section>
+
+  <div id="app-container" class="app-container is-hidden">
     <!-- Header -->
     <header>
       <div class="brand">
@@ -16,12 +34,8 @@
         <h1>花合わせ</h1>
       </div>
       <div class="game-controls">
-        <div class="pvp-controls" aria-label="オンライン対戦">
-          <button id="create-room-btn" class="btn btn-primary">部屋を作る</button>
-          <input id="room-id-input" class="room-id-input" type="text" maxlength="5" placeholder="部屋ID">
-          <button id="join-room-btn" class="btn">参加</button>
-          <span id="current-room-id" class="room-id-label">未接続</span>
-        </div>
+        <span id="current-room-id" class="room-id-label">CPU戦</span>
+        <button id="home-btn" class="btn">ホーム</button>
         <button id="restart-btn" class="btn">最初からやり直す</button>
       </div>
     </header>
@@ -188,3 +202,4 @@
   <script type="module" src="js/main.js"></script>
 </body>
 </html>
+
