@@ -1014,3 +1014,123 @@ header {
   outline: 3px solid var(--accent-gold);
   animation: pulseGlow 1s infinite alternate;
 }
+
+/* Home screen */
+.is-hidden {
+  display: none !important;
+}
+
+.home-screen {
+  width: 100vw;
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background:
+    linear-gradient(rgba(5, 4, 3, 0.58), rgba(5, 4, 3, 0.82)),
+    url("zenfuda.jpg") center / cover no-repeat;
+}
+
+.home-shell {
+  width: min(92vw, 520px);
+  display: grid;
+  gap: 1.2rem;
+  justify-items: stretch;
+  padding: clamp(1.2rem, 4vw, 2rem);
+  background: rgba(12, 11, 10, 0.78);
+  border: 1px solid rgba(212, 175, 55, 0.34);
+  border-radius: 8px;
+  box-shadow: 0 20px 70px rgba(0,0,0,0.58), 0 0 34px rgba(212, 175, 55, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.home-brand {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+}
+
+.home-emblem {
+  font-size: 2.1rem;
+}
+
+.home-brand h1 {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 8vw, 3.3rem);
+  color: var(--accent-gold);
+  letter-spacing: 0;
+  line-height: 1.1;
+}
+
+.home-actions {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.home-action {
+  min-height: 48px;
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  background: rgba(24, 22, 19, 0.92);
+  color: var(--text-primary);
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home-action:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-gold);
+  box-shadow: var(--gold-glow);
+}
+
+.home-action.primary {
+  background: linear-gradient(135deg, #aa7c11 0%, #d4af37 100%);
+  color: #0c0b0a;
+  border-color: #f7d76a;
+}
+
+.home-action.compact {
+  min-width: 120px;
+  padding: 0 0.8rem;
+}
+
+.home-join-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+}
+
+.home-room-input {
+  min-width: 0;
+  height: 48px;
+  border: 1px solid var(--border-gold);
+  border-radius: 6px;
+  background: rgba(8, 7, 6, 0.84);
+  color: var(--text-primary);
+  font-size: 1rem;
+  text-transform: uppercase;
+  padding: 0 0.8rem;
+  outline: none;
+}
+
+.home-room-input:focus {
+  border-color: var(--accent-gold);
+  box-shadow: var(--gold-glow);
+}
+
+.home-status {
+  min-height: 1.3rem;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 520px) {
+  .home-join-row {
+    grid-template-columns: 1fr;
+  }
+}
