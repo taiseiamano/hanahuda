@@ -115,6 +115,7 @@ export class UIManager {
     clearTimeout(this.specialUseTimer);
     this.specialUseToastEl?.classList.remove('active');
     this.specialUseToastEl?.setAttribute('aria-hidden', 'true');
+    this.toastEl?.classList.remove('active');
     this.hideModal();
   }
 
