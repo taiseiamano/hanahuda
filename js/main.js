@@ -1,4 +1,26 @@
-if (homeStatusEl) homeStatusEl.textContent = message;
+// Main Bootstrapper for Hanafuda Hana-Awase Game Base
+
+import { HanafudaGame } from './gameEngine.js';
+import { UIManager } from './uiManager.js';
+import { PVPClient } from './pvpClient.js';
+
+window.addEventListener('DOMContentLoaded', () => {
+  const game = new HanafudaGame();
+  const ui = new UIManager(game);
+  const pvp = new PVPClient();
+  let applyingRemoteState = false;
+  let hasActiveGame = false;
+  let playMode = 'home';
+
+  const homeScreen = document.getElementById('home-screen');
+  const appContainer = document.getElementById('app-container');
+  const homeStatusEl = document.getElementById('home-status');
+  const pvpStatusEl = document.getElementById('pvp-status');
+  const roomIdLabel = document.getElementById('current-room-id');
+  const homeRoomInput = document.getElementById('home-room-id-input');
+
+  const setHomeStatus = (message) => {
+    if (homeStatusEl) homeStatusEl.textContent = message;
   };
 
   const setModeButtonsEnabled = (enabled) => {
